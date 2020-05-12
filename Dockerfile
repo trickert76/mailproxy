@@ -26,9 +26,11 @@ RUN \
     bzip2 \
     ca-certificates \
     fail2ban \
+    iproute2 \
     iptables \
     locales \
     supervisor \
+    rsyslog \
     opendkim \
     opendkim-tools \
     dovecot-core \
@@ -48,9 +50,8 @@ RUN \
   touch /var/log/auth.log && \
   update-locale
 
-#RUN mkdir -p /usr/local/bin
-#COPY bin/* /usr/local/bin/.
-#RUN chmod +x /usr/local/bin/*
+COPY bin /usr/local/bin
+RUN chmod +x /usr/local/bin/*
 
 COPY supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 COPY supervisor/conf.d/* /etc/supervisor/conf.d/
