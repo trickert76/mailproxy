@@ -369,14 +369,6 @@ function _setup_file_permissions() {
 
 	mkdir -p /var/log/mail
 	chown syslog:root /var/log/mail
-
-	touch /var/log/mail/clamav.log
-	chown clamav:adm /var/log/mail/clamav.log
-	chmod 640 /var/log/mail/clamav.log
-
-	touch /var/log/mail/freshclam.log
-	chown clamav:adm /var/log/mail/freshclam.log
-	chmod 640 /var/log/mail/freshclam.log
 }
 
 function _setup_chksum_file() {
@@ -733,14 +725,14 @@ function _setup_docker_permit() {
 	case $PERMIT_DOCKER in
 		"host" )
 			notify 'inf' "Adding $container_network/16 to my networks"
-			postconf -e "$(postconf | grep '^mynetworks =') $container_network/16"
+			# postconf -e "$(postconf | grep '^mynetworks =') $container_network/16"
 			echo $container_network/16 >> /etc/opendmarc/ignore.hosts
 			echo $container_network/16 >> /etc/opendkim/TrustedHosts
 			;;
 
 		"network" )
 			notify 'inf' "Adding docker network in my networks"
-			postconf -e "$(postconf | grep '^mynetworks =') 172.16.0.0/12"
+			# postconf -e "$(postconf | grep '^mynetworks =') 172.16.0.0/12"
 			echo 172.16.0.0/12 >> /etc/opendmarc/ignore.hosts
 			echo 172.16.0.0/12 >> /etc/opendkim/TrustedHosts
 			;;
@@ -748,14 +740,14 @@ function _setup_docker_permit() {
 			for network in $container_networks; do
 				network=$(_sanitize_ipv4_to_subnet_cidr $network)
 				notify 'inf' "Adding docker network $network in my networks"
-				postconf -e "$(postconf | grep '^mynetworks =') $network"
+				# postconf -e "$(postconf | grep '^mynetworks =') $network"
 				echo $network >> /etc/opendmarc/ignore.hosts
 				echo $network >> /etc/opendkim/TrustedHosts
 			done
 			;;
 		* )
 			notify 'inf' "Adding container ip in my networks"
-			postconf -e "$(postconf | grep '^mynetworks =') $container_ip/32"
+			# postconf -e "$(postconf | grep '^mynetworks =') $container_ip/32"
 			echo $container_ip/32 >> /etc/opendmarc/ignore.hosts
 			echo $container_ip/32 >> /etc/opendkim/TrustedHosts
 			;;
@@ -935,17 +927,6 @@ function _fix_var_mail_permissions() {
 	fi
 }
 
-function _fix_cleanup_clamav() {
-    notify 'task' 'Cleaning up disabled Clamav'
-    rm -f /etc/logrotate.d/clamav-*
-    rm -f /etc/cron.d/clamav-freshclam
-}
-
-function _fix_cleanup_spamassassin() {
-    notify 'task' 'Cleaning up disabled spamassassin'
-    rm -f /etc/cron.daily/spamassassin
-}
-
 ##########################################################################
 # << Fix Stack
 ##########################################################################
@@ -988,10 +969,7 @@ function _misc_save_states() {
 		done
 
 		notify 'inf' 'Fixing /var/mail-state/* permissions'
-		chown -R clamav /var/mail-state/lib-clamav
 		chown -R postfix /var/mail-state/lib-postfix
-		chown -R postgrey /var/mail-state/lib-postgrey
-		chown -R debian-spamd /var/mail-state/lib-spamassassin
 		chown -R postfix /var/mail-state/spool-postfix
 
 	fi
@@ -1084,17 +1062,6 @@ function _start_daemons_fetchmail() {
 	notify 'task' 'Starting fetchmail' 'n'
 	/usr/local/bin/setup-fetchmail
 	supervisorctl start fetchmail
-}
-
-function _start_daemons_clamav() {
-	notify 'task' 'Starting clamav' 'n'
-    supervisorctl start clamav
-}
-
-function _start_daemons_postgrey() {
-	notify 'task' 'Starting postgrey' 'n'
-	rm -f /var/run/postgrey/postgrey.pid
-    supervisorctl start postgrey
 }
 
 
